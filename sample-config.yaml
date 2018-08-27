@@ -1,0 +1,8 @@
+# configuration for the nixos upgrade check (this must be a string)
+
+nixosVersion: '18.03'
+
+# the slack URL needs to be kept secret, as it gives access to the slack channel:
+# you will need to provide your own url
+
+slackURL: "https://hooks.slack.com/services/XXXXXXXXX/YYYYYYYYY/ZZZZZZZZZZZZZZZZZZZZZZZZ"

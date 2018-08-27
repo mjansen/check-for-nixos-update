@@ -1,0 +1,3 @@
+we can use nix-shell to set up the right environment:
+
+nix-shell -p 'python36.withPackages(ps: with ps; [ pyyaml certifi urllib3 ])' --command 'python cron_command.py'
