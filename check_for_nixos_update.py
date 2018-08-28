@@ -1,18 +1,26 @@
 #! /usr/bin/env nix-shell
 #! nix-shell -i python3 -p "python36.withPackages(ps: [ ps.pyyaml ps.certifi ps.urllib3 ps.botocore ps.boto3 ])"
 
-import yaml
-import os
-import urllib3
-import json
-import certifi
 import boto3
 import botocore
+import certifi
+import json
+import os
+import urllib3
+import yaml
 
 def nixosChannelURL(nixosVersion):
-    return ('https://nixos.org/channels/nixos-' + nixosVersion + '/')
+    """returns the URL associated with the channel for a specific version of NIXOS.
+
+    This URL will redirect to a specific NIXOS release URL, and we
+    will use the redirect location later to determine the current
+    release for that version.
+
+    """
+    return ('https://nixos.org/channels/nixos-{}/'.format(nixosVersion))
 
 def loadConfig(str):
+    """parse the YAML format configuration string and return the configuration dict"""
     try:
         return (yaml.load(str))
     except yaml.YAMLError as exc:
@@ -20,6 +28,12 @@ def loadConfig(str):
         raise(exc)
 
 def sendSlackMessage(connPool, slackURL, msg):
+    """Send a simple message to a slack channel.
+
+    The channel to send to is implicit in the URL used to submit the
+    request to slack.com.
+
+    """
     data = { 'text': msg }
     encoded_data = json.dumps(data).encode('utf-8')
     result = connPool.request('POST', slackURL,
@@ -31,6 +45,14 @@ def sendSlackMessage(connPool, slackURL, msg):
 BUCKET_NAME = os.environ['BUCKET_NAME']
 
 def my_handler(event, context):
+
+    """handle an AWS Lambda function invokatio to check the current release of the configured NIXOS version
+
+    Send a message is sent to slack.  We add more text if it looks as
+    though there has been a new NIXOS release since the last time we
+    checked.
+
+    """
     print(event)
     # print(context)
     s3 = boto3.resource('s3')
@@ -78,6 +100,8 @@ def my_handler(event, context):
     sendSlackMessage(connPool, slackURL, msg)
 
     return { "message" : "all done" }
+
+# testing from the command line:
 
 if __name__ == '__main__':
   result = my_handler(None, None)
