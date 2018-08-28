@@ -81,7 +81,10 @@ Resources:
       Description: "Check the current NIXOS Release for a given version and update an S3 file"
       Handler: my_handler
       MemorySize: 256
-      Role: !Ref MyRole
+      Role:
+       Fn::GetAtt:
+         - "MyRole"
+         - "Arn"
       Runtime: "python3.6"
       Timeout: 60
 
