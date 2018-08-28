@@ -1,0 +1,49 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Resources:
+
+  MyBucket:
+    Type: AWS::S3::Bucket
+
+  MyRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+      Policies:
+        - PolicyName: "AccessToConfigInS3"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action: "s3:GetObject"
+                Resource:
+                  Fn::Join:
+                    - ""
+                    - - "arn:aws:s3:::"
+                      - !Ref MyBucket
+                      - "/config.yaml"
+              - Effect: "Allow"
+                Action: [ "s3:GetObject", "s3:PutObject" ]
+                Resource: "arn:aws:s3:::*/lastRelease"
+                Resource:
+                  Fn::Join:
+                    - ""
+                    - - "arn:aws:s3:::"
+                      - !Ref MyBucket
+                      - "/lastRelease"
+
+Outputs:
+  NixosReleaseBucket:
+    Value: !Ref MyBucket
+    Description: "Bucket that stores the last seen nixos release"
