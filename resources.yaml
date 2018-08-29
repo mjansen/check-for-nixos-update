@@ -42,48 +42,6 @@ Resources:
                     - - "arn:aws:s3:::"
                       - !Ref MyBucket
                       - "/lastRelease"
-        - PolicyName: "CWEAccess"
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Sid: "TrustCloudWatchEventsToInvokeMyFunction"
-                Effect: "Allow"
-                Principal:
-                  Service:
-                    - "events.amazonaws.com"
-                Action:
-                  - "lambda:InvokeFunction"
-                Resource:
-                  Fn::GetAtt:
-                    - "MyFunction"
-                    - "Arn"
-                Condition:
-                  ArnLike:
-                    "AWS:SourceArn": !GetAtt [ "MyCronEvent", "Arn"]
-                    # "arn:aws:events:region:account-id:rule/rule-name"
-
-      Policies:
-        - PolicyName: "AccessToConfigInS3"
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: "Allow"
-                Action: "s3:GetObject"
-                Resource:
-                  Fn::Join:
-                    - ""
-                    - - "arn:aws:s3:::"
-                      - !Ref MyBucket
-                      - "/config.yaml"
-              - Effect: "Allow"
-                Action: [ "s3:GetObject", "s3:PutObject" ]
-                Resource: "arn:aws:s3:::*/lastRelease"
-                Resource:
-                  Fn::Join:
-                    - ""
-                    - - "arn:aws:s3:::"
-                      - !Ref MyBucket
-                      - "/lastRelease"
 
   MyFunction:
     Type: "AWS::Lambda::Function"
@@ -103,6 +61,16 @@ Resources:
           - "Arn"
       Runtime: "python3.6"
       Timeout: 60
+
+  MyFunctionPermissionCWE:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: "lambda:InvokeFunction"
+      # EventSourceToken: String
+      FunctionName: !GetAtt [ "MyFunction", "Arn" ]
+      Principal: "events.amazonaws.com"
+      # SourceAccount: String
+      SourceArn: !GetAtt [ "MyCronEvent", "Arn" ]
 
   MyCronEvent:
     Type: AWS::Events::Rule
