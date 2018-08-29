@@ -47,39 +47,13 @@ Resources:
     Type: "AWS::Lambda::Function"
     Properties:
       Code:
-        ZipFile:
-          Fn::Join:
-            - ""
-            - - |
-                  import boto3
-                  import botocore
-              - Fn::Join:
-                  - ""
-                  - - "BUCKET_NAME = '"
-                    - !Ref MyBucket
-                    - "' # replace with your bucket name\n"
-              - |
-                  KEY = 'config.yaml'
-
-                  def my_handler(event, context):
-                    print(event)
-                    print(context)
-                    s3 = boto3.resource('s3')
-
-                    try:
-                      s3.Bucket(BUCKET_NAME).download_file(KEY, '/tmp/config.yaml')
-                    except botocore.exceptions.ClientError as e:
-                      if e.response['Error']['Code'] == "404":
-                        print("cannot find the configuration file 'config.yaml'.")
-                      else:
-                        raise
-
-                    with open('/tmp/config.yaml', 'r') as stream:
-                      print(stream.read())
-
-                    return { "message" : "all done" }
+        S3Bucket: !Ref MyBucket
+        S3Key: 'VERSION.zip'
       Description: "Check the current NIXOS Release for a given version and update an S3 file"
-      Handler: index.my_handler
+      Handler: check_for_nixos_update.my_handler
+      Environment:
+        Variables:
+          "BUCKET_NAME": !Ref MyBucket
       MemorySize: 256
       Role:
        Fn::GetAtt:

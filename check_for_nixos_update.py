@@ -23,9 +23,10 @@ def loadConfig(str):
     """parse the YAML format configuration string and return the configuration dict"""
     try:
         return (yaml.load(str))
-    except yaml.YAMLError as exc:
-        print(exc)
-        raise(exc)
+    except Exception as e:
+        print(e)
+        print(str)
+        raise(e)
 
 def sendSlackMessage(connPool, slackURL, msg):
     """Send a simple message to a slack channel.

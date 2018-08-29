@@ -1,0 +1,43 @@
+version=$(cd .. && cat resources.yaml check_for_nixos_update.py | sha1sum | cut -c 1-40)
+
+if [ "$version" == "$(cat lastDeployedVersion)" ]
+then
+  echo "no change"
+  exit 0
+fi
+
+cat ../resources.yaml | sed -e "s/VERSION/$version/" > resources.yaml
+
+echo "now deploying version $version"
+echo
+
+cp ../check_for_nixos_update.py tmp/check_for_nixos_update.py
+
+(cd tmp && zip -r ../$version.zip *)
+
+aws s3 cp $version.zip s3://check-for-nixos-update-mybucket-1odydo854iyre/$version.zip
+
+aws cloudformation describe-stacks --stack-name check-for-nixos-update | tee output-stack-state-0
+echo
+aws cloudformation update-stack    --stack-name check-for-nixos-update --template-body file://resources.yaml --capabilities CAPABILITY_IAM | tee output-stack-update
+echo
+
+while :
+do
+  aws cloudformation describe-stacks --stack-name check-for-nixos-update | tee output-stack-state-1
+
+  if ! diff -q output-stack-state-[01]
+  then
+    break
+  fi
+
+  sleep 10
+done
+echo
+
+sleep 5
+
+echo "$version" > lastDeployedVersion
+
+aws lambda invoke --function-name "check-for-nixos-update-MyFunction-14OX9IXGUQ4T4" output | tee output-invoke
+cat output; echo
