@@ -43,6 +43,60 @@ Resources:
                       - !Ref MyBucket
                       - "/lastRelease"
 
+  MyCWERole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "events.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        - Version: "2012-10-17"
+          Statement:
+            - Sid: "TrustCloudWatchEventsToInvokeMyFunction"
+              Effect: "Allow"
+              Principal:
+                Service:
+                  - "events.amazonaws.com"
+              Action:
+                - "lambda:InvokeFunction"
+              Resource:
+                Fn::GetAtt:
+                  - "MyFunction"
+                  - "Arn"
+#              Condition:
+#                ArnLike:
+#                  AWS:SourceArn: "arn:aws:events:region:account-id:rule/rule-name"
+
+      Policies:
+        - PolicyName: "AccessToConfigInS3"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action: "s3:GetObject"
+                Resource:
+                  Fn::Join:
+                    - ""
+                    - - "arn:aws:s3:::"
+                      - !Ref MyBucket
+                      - "/config.yaml"
+              - Effect: "Allow"
+                Action: [ "s3:GetObject", "s3:PutObject" ]
+                Resource: "arn:aws:s3:::*/lastRelease"
+                Resource:
+                  Fn::Join:
+                    - ""
+                    - - "arn:aws:s3:::"
+                      - !Ref MyBucket
+                      - "/lastRelease"
+
   MyFunction:
     Type: "AWS::Lambda::Function"
     Properties:
@@ -56,11 +110,21 @@ Resources:
           "BUCKET_NAME": !Ref MyBucket
       MemorySize: 256
       Role:
-       Fn::GetAtt:
-         - "MyRole"
-         - "Arn"
+        Fn::GetAtt:
+          - "MyRole"
+          - "Arn"
       Runtime: "python3.6"
       Timeout: 60
+
+  MyCronEvent:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: 'Trigger the execution of the lambda'
+      ScheduleExpression: "cron(0/5 * * * ? *)"
+      Targets:
+        - Arn: !GetAtt [ "MyFunction", "Arn" ]
+          Id: "check-for-nixos-update"
+          # RoleArn: !GetAtt [ "MyCWERole", "Arn" ]
 
 Outputs:
   NixosReleaseBucket:

@@ -28,7 +28,19 @@ do
 
   if ! diff -q output-stack-state-[01]
   then
-    break
+    if grep -q UPDATE_COMPLETE output-stack-state-1
+    then
+      break
+    fi
+
+    if grep -q UPDATE_ROLLBACK_COMPLETE output-stack-state-1
+    then
+      echo
+      echo "that is not good, pull the Anden cord!"
+      echo
+      aws cloudformation describe-stack-events --stack-name check-for-nixos-update | tee output-stack-events
+      exit 1
+    fi
   fi
 
   sleep 10
