@@ -42,37 +42,25 @@ Resources:
                     - - "arn:aws:s3:::"
                       - !Ref MyBucket
                       - "/lastRelease"
-
-  MyCWERole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          -
-            Effect: "Allow"
-            Principal:
-              Service:
-                - "events.amazonaws.com"
-            Action:
-              - "sts:AssumeRole"
-      Policies:
-        - Version: "2012-10-17"
-          Statement:
-            - Sid: "TrustCloudWatchEventsToInvokeMyFunction"
-              Effect: "Allow"
-              Principal:
-                Service:
-                  - "events.amazonaws.com"
-              Action:
-                - "lambda:InvokeFunction"
-              Resource:
-                Fn::GetAtt:
-                  - "MyFunction"
-                  - "Arn"
-#              Condition:
-#                ArnLike:
-#                  AWS:SourceArn: "arn:aws:events:region:account-id:rule/rule-name"
+        - PolicyName: "CWEAccess"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: "TrustCloudWatchEventsToInvokeMyFunction"
+                Effect: "Allow"
+                Principal:
+                  Service:
+                    - "events.amazonaws.com"
+                Action:
+                  - "lambda:InvokeFunction"
+                Resource:
+                  Fn::GetAtt:
+                    - "MyFunction"
+                    - "Arn"
+                Condition:
+                  ArnLike:
+                    "AWS:SourceArn": !GetAtt [ "MyCronEvent", "Arn"]
+                    # "arn:aws:events:region:account-id:rule/rule-name"
 
       Policies:
         - PolicyName: "AccessToConfigInS3"

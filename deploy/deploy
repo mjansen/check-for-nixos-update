@@ -8,6 +8,8 @@ fi
 
 cat ../resources.yaml | sed -e "s/VERSION/$version/" > resources.yaml
 
+yaml2json resources.yaml > resources.json || exit 1
+
 echo "now deploying version $version"
 echo
 
