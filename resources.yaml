@@ -66,21 +66,18 @@ Resources:
     Type: AWS::Lambda::Permission
     Properties:
       Action: "lambda:InvokeFunction"
-      # EventSourceToken: String
       FunctionName: !GetAtt [ "MyFunction", "Arn" ]
       Principal: "events.amazonaws.com"
-      # SourceAccount: String
       SourceArn: !GetAtt [ "MyCronEvent", "Arn" ]
 
   MyCronEvent:
     Type: AWS::Events::Rule
     Properties:
       Description: 'Trigger the execution of the lambda'
-      ScheduleExpression: "cron(0/5 * * * ? *)"
+      ScheduleExpression: "cron(7 * * * ? *)"
       Targets:
         - Arn: !GetAtt [ "MyFunction", "Arn" ]
           Id: "check-for-nixos-update"
-          # RoleArn: !GetAtt [ "MyCWERole", "Arn" ]
 
 Outputs:
   NixosReleaseBucket:
