@@ -1,8 +1,10 @@
 # check-for-nixos-update
-A simple python script to check for the current release of a specified nixos version, and notify a slack channel.
 
-This can be run from cron as with the following configuration:
+The idea is to check the current release of a specified nixos version,
+and, if it has changed, notify a slack channel.
 
-```
-5 7 * * * /home/mjansen/source/check-for-nixos-update/cron_command.py
-```
+The implementation is serverless, i.e. we use a Cloudwatch Scheduled
+event to trigger a Lambda to do the check.  The lambda deployment, the
+configuration, and the last retrieved state are stored in a bucket.
+
+Deployment is via cloudformation.
